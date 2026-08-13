@@ -11,13 +11,13 @@ services:
     networks:
       - hotelio-net
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://monolith-db:5432/hotelio
+      SPRING_DATASOURCE_URL: jdbc:postgresql://hotelio-db:5432/hotelio
       SPRING_DATASOURCE_USERNAME: hotelio
       SPRING_DATASOURCE_PASSWORD: hotelio
-      BOOKING_SERVICE_EXTERNAL_HOST: booking-service
-      BOOKING_SERVICE_EXTERNAL_PORT: 9090
+      # BOOKING_SERVICE_EXTERNAL_HOST: booking-service
+      # BOOKING_SERVICE_EXTERNAL_PORT: 9090
 
-  monolith-db:
+  monolith-db:c
     image: postgres:15
     container_name: hotelio-db
     environment:
@@ -52,8 +52,37 @@ services:
     networks:
       - hotelio-net
 
+  booking-service:
+    build:
+      context: ./booking-service
+      dockerfile: Dockerfile
+    container_name: booking-service
+    ports:
+      - "8085:8080"
+    networks:
+      - hotelio-net
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://booking-service-db:5432/booking-service
+      SPRING_DATASOURCE_USERNAME: booking-service
+      SPRING_DATASOURCE_PASSWORD: booking-service
+
+  booking-service-db:
+    image: postgres:15
+    container_name: booking-service-db
+    environment:
+      POSTGRES_USER: booking-service
+      POSTGRES_PASSWORD: booking-service
+      POSTGRES_DB: booking-service
+    ports:
+      - "5434:5432"
+    volumes:
+      - booking-service-db-data:/var/lib/postgresql/data
+    networks:
+      - hotelio-net
+
 volumes:
   monolith-db-data:
+  booking-service-db-data:
 
 networks:
   hotelio-net:
