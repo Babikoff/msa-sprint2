@@ -1,6 +1,8 @@
 package com.hotelio.bookingservice;
 
 import com.hotelio.bookingservice.service.BookingService;
+import com.hotelio.bookingservice.service.RestConnectionProxy;
+
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -17,6 +19,11 @@ public class BookingServiceApp {
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
+    }    
+
+    @Bean
+    public RestConnectionProxy restConnectionProxy() {
+        return new RestConnectionProxy(new RestTemplate());
     }    
     
     @Bean
