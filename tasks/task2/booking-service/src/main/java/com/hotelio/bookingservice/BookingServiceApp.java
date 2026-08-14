@@ -1,7 +1,7 @@
 package com.hotelio.bookingservice;
 
+import com.hotelio.bookingservice.connectors.RestConnectionProxy;
 import com.hotelio.bookingservice.service.BookingService;
-import com.hotelio.bookingservice.service.RestConnectionProxy;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

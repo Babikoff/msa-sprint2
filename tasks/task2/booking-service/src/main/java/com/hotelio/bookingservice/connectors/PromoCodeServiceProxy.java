@@ -1,4 +1,4 @@
-package com.hotelio.bookingservice.service;
+package com.hotelio.bookingservice.connectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,11 +6,11 @@ import com.hotelio.bookingservice.entity.PromoCode;
 import org.springframework.stereotype.Service;
 
 @Service
-public class PromoCodeService {
+public class PromoCodeServiceProxy {
     private final RestConnectionProxy restConnectionProxy;
     private final ObjectMapper objectMapper;
 
-    public PromoCodeService(RestConnectionProxy restConnectionProxy, ObjectMapper objectMapper) {
+    public PromoCodeServiceProxy(RestConnectionProxy restConnectionProxy, ObjectMapper objectMapper) {
         this.restConnectionProxy = restConnectionProxy;
         this.objectMapper = objectMapper;
     }

@@ -1,5 +1,9 @@
 package com.hotelio.bookingservice.service;
 
+import com.hotelio.bookingservice.connectors.AppUserServiceProxy;
+import com.hotelio.bookingservice.connectors.HotelServiceProxy;
+import com.hotelio.bookingservice.connectors.PromoCodeServiceProxy;
+import com.hotelio.bookingservice.connectors.ReviewServiceProxy;
 import com.hotelio.bookingservice.entity.Booking;
 import com.hotelio.bookingservice.entity.PromoCode;
 import com.hotelio.bookingservice.repository.BookingRepository;
@@ -16,17 +20,17 @@ public class BookingService {
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);
 
     private final BookingRepository bookingRepository;
-    private final PromoCodeService promoCodeService;
-    private final ReviewService reviewService;
-    private final AppUserService userService;
-    private final HotelService hotelService;
+    private final PromoCodeServiceProxy promoCodeService;
+    private final ReviewServiceProxy reviewService;
+    private final AppUserServiceProxy userService;
+    private final HotelServiceProxy hotelService;
 
     public BookingService(
             BookingRepository bookingRepository,
-            PromoCodeService promoCodeService,
-            ReviewService reviewService,
-            AppUserService userService,
-            HotelService hotelService
+            PromoCodeServiceProxy promoCodeService,
+            ReviewServiceProxy reviewService,
+            AppUserServiceProxy userService,
+            HotelServiceProxy hotelService
     ) {
         this.bookingRepository = bookingRepository;
         this.promoCodeService = promoCodeService;

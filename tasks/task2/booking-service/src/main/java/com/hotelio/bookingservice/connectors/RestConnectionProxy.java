@@ -1,4 +1,4 @@
-package com.hotelio.bookingservice.service;
+package com.hotelio.bookingservice.connectors;
 
 import org.springframework.web.client.RestTemplate;
 

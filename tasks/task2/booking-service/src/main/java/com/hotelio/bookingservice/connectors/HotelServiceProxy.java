@@ -1,11 +1,11 @@
-package com.hotelio.bookingservice.service;
+package com.hotelio.bookingservice.connectors;
 
 import org.springframework.stereotype.Service;
 
 @Service
-public class HotelService {
+public class HotelServiceProxy {
     private final RestConnectionProxy restConnectionProxy;
-    public HotelService(RestConnectionProxy restConnectionProxy) {
+    public HotelServiceProxy(RestConnectionProxy restConnectionProxy) {
         this.restConnectionProxy = restConnectionProxy;
     }
 
