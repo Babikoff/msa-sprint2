@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ReviewService {
-    private final  RestConnectionProxy restConnectionProxy;
+    private final RestConnectionProxy restConnectionProxy;
 
     public ReviewService(RestConnectionProxy restConnectionProxy) {
         this.restConnectionProxy = restConnectionProxy;

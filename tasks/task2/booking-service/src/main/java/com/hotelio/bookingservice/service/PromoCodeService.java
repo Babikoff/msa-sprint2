@@ -1,27 +1,27 @@
 package com.hotelio.bookingservice.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hotelio.bookingservice.entity.PromoCode;
 import org.springframework.stereotype.Service;
-
-// import java.util.Optional;
-import java.time.LocalDate;
 
 @Service
 public class PromoCodeService {
     private final RestConnectionProxy restConnectionProxy;
+    private final ObjectMapper objectMapper;
 
-    public PromoCodeService(RestConnectionProxy restConnectionProxy) {
+    public PromoCodeService(RestConnectionProxy restConnectionProxy, ObjectMapper objectMapper) {
         this.restConnectionProxy = restConnectionProxy;
+        this.objectMapper = objectMapper;
     }
 
     public PromoCode validate(String promoCode, String userId) {
-        PromoCode fullPromoCode = new PromoCode();
-        fullPromoCode.setCode(promoCode);
-        fullPromoCode.setDiscount(15);
-        fullPromoCode.setVipOnly(false);
-        fullPromoCode.setExpired(false);
-        fullPromoCode.setValidUntil(LocalDate.now().plusDays(1));
-        fullPromoCode.setDescription("Test promo");
-        return fullPromoCode;
+        String url = "/promos/validate" + "?code=" + promoCode + "&userId=" + userId;
+        String result = restConnectionProxy.PostAndGetStringValue(url, null);
+        try {
+            return objectMapper.readValue(result, PromoCode.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to parse promo code response: " + result, e);
+        }        
     }
 }

@@ -14,11 +14,19 @@ public class RestConnectionProxy {
   }
 
   public String GetStringValue(String subUrl) {
-    log.info("Calling " + subUrl);
-    String result = restConnection.getForObject("http://hotelio-monolith:8080/api/" + subUrl, String.class);
-    log.info(subUrl + " returned " + result);
+    String url = "http://hotelio-monolith:8080/api/" + subUrl;
+    log.info("Calling GET for " + url);
+    String result = restConnection.getForObject(url, String.class);
+    log.info(url + " returned " + result);
     return result;
   }
 
+  public String PostAndGetStringValue(String subUrl, Object request) {
+    String url = "http://hotelio-monolith:8080/api/" + subUrl;
+    log.info("Calling POST for " + url);
+    String result = restConnection.postForObject(url, request, String.class);
+    log.info(url + " returned " + result);
+    return result;
+  }
 }
 
