@@ -8,24 +8,11 @@ import java.time.LocalDate;
 
 @Service
 public class PromoCodeService {
+    private final RestConnectionProxy restConnectionProxy;
 
-    // private final PromoCodeRepository repository;
-    // private final AppUserService userService;
-
-    public PromoCodeService(/*PromoCodeRepository repository, AppUserService userService*/) {
-        // this.repository = repository;
-        // this.userService = userService;
+    public PromoCodeService(RestConnectionProxy restConnectionProxy) {
+        this.restConnectionProxy = restConnectionProxy;
     }
-
-    // public Optional<PromoCode> getValidPromo(String code, boolean isVipUser) {
-    //     return repository.findById(code)
-    //             .filter(p -> !p.isExpired())
-    //             .filter(p -> !p.isVipOnly() || isVipUser);
-    // }
-
-    // public Optional<PromoCode> findByCode(String code) {
-    //     return repository.findById(code);
-    // }
 
     public PromoCode validate(String promoCode, String userId) {
         PromoCode fullPromoCode = new PromoCode();
@@ -37,9 +24,4 @@ public class PromoCodeService {
         fullPromoCode.setDescription("Test promo");
         return fullPromoCode;
     }
-
-    // public boolean isPromoValid(String code, boolean isVipUser) {
-    //     return getValidPromo(code, isVipUser).isPresent();
-    // }
-
 }

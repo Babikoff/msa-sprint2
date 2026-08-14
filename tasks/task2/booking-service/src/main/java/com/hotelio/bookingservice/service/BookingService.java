@@ -42,11 +42,17 @@ public class BookingService {
     public Booking createBooking(String userId, String hotelId, String promoCode) {
         log.info("Creating booking: userId={}, hotelId={}, promoCode={}", userId, hotelId, promoCode);
 
-        validateUser(userId);
-        validateHotel(hotelId);
+        double basePrice;
+        double discount;
+        try {
+            validateUser(userId);
+            validateHotel(hotelId);
 
-        double basePrice = resolveBasePrice(userId);
-        double discount = resolvePromoDiscount(promoCode, userId);
+            basePrice = resolveBasePrice(userId);
+            discount = resolvePromoDiscount(promoCode, userId);
+        } catch (Exception e) {
+            throw new RuntimeException("Booking request failed with error: " + e.getMessage(), e);
+        }
 
         double finalPrice = basePrice - discount;
         log.info("Final price calculated: base={}, discount={}, final={}", basePrice, discount, finalPrice);
