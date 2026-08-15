@@ -5,12 +5,15 @@ import com.hotelio.bookingservice.connectors.HotelServiceProxy;
 import com.hotelio.bookingservice.connectors.PromoCodeServiceProxy;
 import com.hotelio.bookingservice.connectors.ReviewServiceProxy;
 import com.hotelio.bookingservice.entity.Booking;
+import com.hotelio.bookingservice.entity.BookingEvent;
 import com.hotelio.bookingservice.entity.PromoCode;
+import com.hotelio.bookingservice.kafka.BookingKafkaProducer;
 import com.hotelio.bookingservice.repository.BookingRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,19 +27,22 @@ public class BookingService {
     private final ReviewServiceProxy reviewService;
     private final AppUserServiceProxy userService;
     private final HotelServiceProxy hotelService;
+    private final BookingKafkaProducer bookingKafkaProducer;
 
     public BookingService(
             BookingRepository bookingRepository,
             PromoCodeServiceProxy promoCodeService,
             ReviewServiceProxy reviewService,
             AppUserServiceProxy userService,
-            HotelServiceProxy hotelService
+            HotelServiceProxy hotelService,
+            BookingKafkaProducer bookingKafkaProducer
     ) {
         this.bookingRepository = bookingRepository;
         this.promoCodeService = promoCodeService;
         this.reviewService = reviewService;
         this.userService = userService;
         this.hotelService = hotelService;
+        this.bookingKafkaProducer = bookingKafkaProducer;
     }
 
     public List<Booking> listAll(String userId) {
@@ -67,8 +73,22 @@ public class BookingService {
         booking.setPromoCode(promoCode);
         booking.setDiscountPercent(discount);
         booking.setPrice(finalPrice);
+        booking.setCreatedAt(Instant.now());
 
-        return bookingRepository.save(booking);
+        Booking saved = bookingRepository.save(booking);
+
+        publishBookingCreatedEvent(saved);
+
+        return saved;
+    }
+
+    private void publishBookingCreatedEvent(Booking booking) {
+        try {
+            bookingKafkaProducer.publishBookingCreated(BookingEvent.from(booking));
+        } catch (Exception e) {
+            // Best-effort: Kafka publish failure must not break the booking creation flow.
+            log.error("Failed to publish booking created event for booking id={}", booking.getId(), e);
+        }
     }
 
     private void validateUser(String userId) {
