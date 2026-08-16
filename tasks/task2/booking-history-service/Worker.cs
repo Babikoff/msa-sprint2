@@ -1,4 +1,4 @@
-namespace booking_history_service
+namespace BookingHistoryService
 {
     public class Worker : BackgroundService
     {

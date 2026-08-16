@@ -122,7 +122,7 @@ services:
     networks:
       - hotelio-net
     environment:
-      DB_CONNECTION_STRING: Host=booking-history-db;Port=5432;Database=booking-history_db;Username=booking-history;Password=booking-history;
+      POSTGRES_CONNECTION_STRING: Host=booking-history-db;Port=5432;Database=booking-history_db;Username=booking-history;Password=booking-history;
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       booking-history-db:
