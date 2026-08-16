@@ -20,7 +20,7 @@ public class BookingKafkaProducer {
 
     public BookingKafkaProducer(
             KafkaTemplate<String, BookingEvent> kafkaTemplate,
-            @Value("${BOOKING_EVENTS_TOPIC:booking.created}") String topic
+            @Value("${KAFKA_BOOKING_EVENTS_TOPIC:booking.created}") String topic
     ) {
         this.kafkaTemplate = kafkaTemplate;
         this.topic = topic;
