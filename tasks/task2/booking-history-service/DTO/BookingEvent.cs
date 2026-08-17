@@ -25,5 +25,5 @@ public record BookingEvent
     public double? Price { get; set; } = null!;
 
     [JsonPropertyName("createdAt")]
-    public DateTimeOffset? CreatedAt { get; set; } = null!;
+    public double? CreatedAt { get; set; } = null!;
 }
