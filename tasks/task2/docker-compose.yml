@@ -124,6 +124,7 @@ services:
     environment:
       POSTGRES_CONNECTION_STRING: Host=booking-history-db;Port=5432;Database=booking-history_db;Username=booking-history;Password=booking-history;
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_BOOKING_EVENTS_TOPIC: booking.created
     depends_on:
       booking-history-db:
         condition: service_healthy
