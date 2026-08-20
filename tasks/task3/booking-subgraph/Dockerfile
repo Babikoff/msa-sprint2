@@ -2,10 +2,9 @@ FROM node:18
 
 WORKDIR /app
 
-COPY booking-subgraph/package.json ./
+COPY package.json ./
 RUN npm install
 
-COPY booking-subgraph/ .
-COPY common/ /common/
+COPY . .
 
 CMD ["node", "index.js"]

@@ -12,9 +12,7 @@ services:
       - hotelio-net
 
   booking-subgraph:
-    build:
-      context: .
-      dockerfile: booking-subgraph/Dockerfile
+    build: ./booking-subgraph
     ports:
       - "4001:4001"
     networks:
