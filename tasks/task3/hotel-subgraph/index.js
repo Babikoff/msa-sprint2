@@ -38,7 +38,7 @@ async function getHotelById(id) {
     id: hotelJson.id,
     name: hotelJson.name || hotelJson.description || 'No name',
     city: hotelJson.city,
-    stars: hotelJson.rating,
+    stars: Math.round(hotelJson.rating),
     description: hotelJson.description || ""
   };
 

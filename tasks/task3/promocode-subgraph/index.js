@@ -6,9 +6,8 @@ import NodeCache from 'node-cache';
 import gql from 'graphql-tag';
 
 const typeDefs = gql`
-  type PromoCode @key(fields: "id") {
-    id: ID!
-    code: String
+  type PromoCode @key(fields: "code") {
+    code: String!
     discount: Float
     vipOnly: Boolean
     expired: Boolean
@@ -18,7 +17,7 @@ const typeDefs = gql`
   }
 
   type Query {
-    promoCodesByIds(ids: [ID!]!): [PromoCode]
+    promoCodesByIds(codes: [ID!]!): [PromoCode]
     validatePromoCode(code: String!, hotelId: ID): PromoCode!
   }
 `;
@@ -29,7 +28,7 @@ var monolithClient = new RestClient('http://monolith:8080/api');
 // stdTTL: 300s (5 min) expiration, checkperiod: 60s cleanup interval.
 const promoCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
-async function getPromoById(id) {
+async function getPromoByPromocode(id) {
   const cached = promoCache.get(id);
   if (cached) {
     console.log('Cache hit for promo ' + id);
@@ -60,24 +59,24 @@ const resolvers = {
 
       if (!id) return null;
 
-      return await getPromoById(id);
+      return await getPromoByPromocode(id);
     },
   },
 
   Query: {
-    promoCodesByIds: async (_, { ids }) => {
+    promoCodesByIds: async (_, { codes }) => {
       console.log("promosByIds");
 
-      if (!ids) return [];
+      if (!codes) return [];
 
       var promos = Array();
-      for (const id of ids) {
+      for (const code of codes) {
         try {
-          var promo = await getPromoById(id);
+          var promo = await getPromoByPromocode(code);
           promos.push(promo);
         }
         catch (error) {
-          console.error(`Could not load promo for Id: ${id}. Error: ${error}`);
+          console.error(`Could not load promo for Id: ${code}. Error: ${error}`);
         }
       };
 

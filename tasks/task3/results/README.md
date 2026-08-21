@@ -2,7 +2,7 @@
 **GraphQL запросы для тестирования**
 
 query($userId: String!) {
-  promoCodesByIds(ids: ["TESTCODE1", "TESTCODE2"]) {
+  promoCodesByIds(codes: ["TESTCODE1", "TESTCODE2"]) {
     code
   },  
   bookingsByUser(userId: "test-user-3") {
@@ -11,12 +11,13 @@ query($userId: String!) {
       name
       id
       city
+      stars
     }
   },
   hotelsByIds(ids: ["test-hotel-1", "test-hotel-2"]) {
     id
     name
     city
-
+    stars
   }  
 }
