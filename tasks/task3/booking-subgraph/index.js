@@ -24,22 +24,27 @@ const typeDefs = gql`
 
 `;
 
+var bookingService = new RestClient('http://booking-service:8080/api');
+
 const resolvers = {
   Query: {
     bookingsByUser: async (_, { userId }, { req }) => {
-      console.log("bookingsByUser");
+      console.log('bookingsByUser');
 
       if (!userId) return []; 
 
-      // Вызов к grpc booking-сервису
-      var bookingService = new RestClient('http://booking-service:8080/api');
-      var json = await bookingService.fetch('/bookings?userId=' + userId);
-      console.log('Got bookings: ' + JSON.stringify(json));
-      return json;
+      var bookingsJson = await bookingService.fetch('/bookings?userId=' + userId);
+      console.log('Got bookings: ' + JSON.stringify(bookingsJson));
+      return bookingsJson;
     },
   },
   Booking: {
-	  // TODO: Реальный вызов к grpc booking-сервису или заглушка + ACL
+    __resolveReference: async ({ id }) => {
+      console.log('Resolve booking ' + id);
+      var bookingJson = await bookingService.fetch('/bookings/' + userId);
+      console.log('Got a booking: ' + JSON.stringify(bookingJson));
+      return bookingJson || null;    
+    },
     
   },
 };

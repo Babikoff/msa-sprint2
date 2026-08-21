@@ -23,6 +23,14 @@ public class BookingController {
         return bookingService.listAll(userId);
     }
 
+    // GET /api/bookings?id=123
+    @GetMapping("/{id}")
+    public ResponseEntity<Booking> getById(@PathVariable String id) {
+        return bookingService.findById(id)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+    }    
+
     // POST /api/bookings
     @PostMapping
     public ResponseEntity<Booking> createBooking(@RequestParam String userId,

@@ -1,5 +1,6 @@
 package com.hotelio.bookingservice.service;
 
+import com.google.common.primitives.Longs;
 import com.hotelio.bookingservice.connectors.AppUserServiceProxy;
 import com.hotelio.bookingservice.connectors.HotelServiceProxy;
 import com.hotelio.bookingservice.connectors.PromoCodeServiceProxy;
@@ -47,6 +48,12 @@ public class BookingService {
 
     public List<Booking> listAll(String userId) {
         return userId != null ? bookingRepository.findByUserId(userId) : bookingRepository.findAll();
+    }
+
+    public Optional<Booking> findById(String bookingId) {
+        if (bookingId == null) return null;
+        Long id = Longs.tryParse(bookingId);
+        return id != null ? bookingRepository.findById(id) : Optional.empty();
     }
 
     public Booking createBooking(String userId, String hotelId, String promoCode) {
