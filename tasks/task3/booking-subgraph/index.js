@@ -2,6 +2,7 @@ import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import { buildSubgraphSchema } from '@apollo/subgraph';
 import { RestClient } from './rest-client.js';
+import { GraphQLError } from 'graphql';
 import gql from 'graphql-tag';
 
 const typeDefs = gql`
@@ -30,6 +31,14 @@ const resolvers = {
   Query: {
     bookingsByUser: async (_, { userId }, { req }) => {
       console.log('bookingsByUser');
+
+      const userIdFromHeader = req.headers.userid;
+      if (!userIdFromHeader) {
+        throw new GraphQLError('No user info in the Header.');
+      }
+      if (userId !== userIdFromHeader) {
+        throw new GraphQLError('Wrong user info.');
+      }
 
       if (!userId) return []; 
 
