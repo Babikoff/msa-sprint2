@@ -6,6 +6,13 @@ import NodeCache from 'node-cache';
 import gql from 'graphql-tag';
 
 const typeDefs = gql`
+  schema
+    @link(url: "https://specs.apollo.dev/federation/v2.0", 
+          import: ["@override", "@requires", "@key", "@external" ]
+          )
+      {
+        query: Query
+      }
   type PromoCode @key(fields: "code") {
     code: String!
     discount: Float
@@ -16,9 +23,24 @@ const typeDefs = gql`
     description: String
   }
 
+  type DiscountInfo {
+    isValid: Boolean!
+    originalDiscount: Float!    # Исходное значение из booking
+    finalDiscount: Float!       # Актуальное значение после проверки
+    description: String
+    expiresAt: String
+  } 
+
+  extend type Booking @key(fields: "id") {
+    id: ID! @external
+    promoCode: String @external
+    discountPercent: Float @override(from: "booking") @requires(fields: "promoCode")  # ПЕРЕОПРЕДЕЛЯЕМ значение из booking-subgraph
+    discountInfo: DiscountInfo @requires(fields: "promoCode")
+  } 
+
   type Query {
-    promoCodesByIds(codes: [ID!]!): [PromoCode]
-    validatePromoCode(code: String!, hotelId: ID): PromoCode!
+    promosByCodes(codes: [ID!]!): [PromoCode]
+    validatePromoCode(code: String!, hotelId: ID): DiscountInfo!
   }
 `;
 
@@ -28,43 +50,68 @@ var monolithClient = new RestClient('http://monolith:8080/api');
 // stdTTL: 300s (5 min) expiration, checkperiod: 60s cleanup interval.
 const promoCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
-async function getPromoByPromocode(id) {
-  const cached = promoCache.get(id);
+function convertToDiscountInfo(promo) {
+  if (!promo)
+    return null;
+  else
+    return {
+      isValid: promo?.isValid ?? false,
+      originalDiscount: promo?.discount ?? 0,
+      finalDiscount: promo?.isValid ? (promo.discount ?? 0) : 0,
+      description: promo?.description ?? "",
+      expiresAt: promo?.validUntil ?? null,
+    };
+}
+
+async function getPromoByPromocode(code) {
+  const cached = promoCache.get(code);
   if (cached) {
-    console.log('Cache hit for promo ' + id);
+    console.log('Cache hit for promo ' + code);
     return cached;
   }
 
-  const promoJson = await monolithClient.fetch('/promos/' + id);
+  const promoJson = await monolithClient.fetch('/promos/' + code);
   console.log('Got promo: ' + JSON.stringify(promoJson));
-
-  // const promoCode = {
-  //   id: promoJson.id,
-  //   name: promoJson.name || promoJson.description || 'No name',
-  //   city: promoJson.city,
-  //   stars: promoJson.rating,
-  //   description: promoJson.description || ""
-  // };
-
-  promoCache.set(id, promoJson);
-  console.log('Cached promo ' + id);
+  if (promoJson) {
+    promoCache.set(code, promoJson);
+    console.log('Cached promo ' + code);
+  }
   return promoJson;
-  //return promoCode;
 }
 
 const resolvers = {
-  PromoCode: {
-    __resolveReference: async ({ id }) => {
-      console.log('Resolve promo ' + id);
+  // PromoCode: {
+  //   __resolveReference: async ({ id }) => {
+  //     console.log('Resolve PromoCode ' + id);
+  //     if (!id) return null;
+  //     return await getPromoByPromocode(id);
+  //   },
+  // },
+  // DiscountInfo: {
+  //   __resolveReference: async ({ id }) => {
+  //     console.log('Resolve Discount ' + id);
+  //     if (!id) return null;
+  //     return await convertToDiscountInfo(getPromoByPromocode(id));
+  //   },
+  // },
+  Booking: {
+    __resolveReference: async (ref) => ref,
 
-      if (!id) return null;
+    discountPercent: async (booking) => {
+      if (!booking.promoCode) return 0.0;
+      const promo = await getPromoByPromocode(booking.promoCode);
+      return promo?.discount ?? 0.0;
+    },
 
-      return await getPromoByPromocode(id);
+    discountInfo: async (booking) => {
+      if (!booking.promoCode) return convertToDiscountInfo(null);
+      const promo = await getPromoByPromocode(booking.promoCode);
+      return convertToDiscountInfo(promo);
     },
   },
 
   Query: {
-    promoCodesByIds: async (_, { codes }) => {
+    promosByCodes: async (_, { codes }) => {
       console.log("promosByIds");
 
       if (!codes) return [];
@@ -73,7 +120,8 @@ const resolvers = {
       for (const code of codes) {
         try {
           var promo = await getPromoByPromocode(code);
-          promos.push(promo);
+          if (promo)
+            promos.push(promo);
         }
         catch (error) {
           console.error(`Could not load promo for Id: ${code}. Error: ${error}`);
@@ -83,6 +131,10 @@ const resolvers = {
       console.log('Got promos: ' + JSON.stringify(promos));
       return promos;
     },
+    validatePromoCode: async (_, { code }) => {
+      const promo = await getPromoByPromocode(code);
+      return convertToDiscountInfo(promo);
+    },    
   },
 };
 

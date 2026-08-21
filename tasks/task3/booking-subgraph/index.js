@@ -10,7 +10,7 @@ const typeDefs = gql`
     userId: String!
     hotelId: String!
     promoCode: String
-    discountPercent: Int
+    discountPercent: Float
     hotel: Hotel
   }
 
