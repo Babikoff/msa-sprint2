@@ -41,11 +41,14 @@ const resolvers = {
   Booking: {
     __resolveReference: async ({ id }) => {
       console.log('Resolve booking ' + id);
-      var bookingJson = await bookingService.fetch('/bookings/' + userId);
+      var bookingJson = await bookingService.fetch('/bookings/' + id);
       console.log('Got a booking: ' + JSON.stringify(bookingJson));
       return bookingJson || null;    
     },
-    
+    hotel: (booking) => {
+      // Return a reference for the gateway to resolve via the Hotel subgraph
+      return { id: booking.hotelId };
+    },
   },
 };
 
