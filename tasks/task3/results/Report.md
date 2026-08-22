@@ -17,9 +17,9 @@
         │      :4001      │ │     :4002      │ │       :4003       │
         └────────┬────────┘ └────────┬───────┘ └─────────┬─────────┘
                  │                   │                   │
-                 │        ┌──────────▼───────┐          │
-                 │        │     monolith     │          │
-                 │        │  /api/hotels/*   │◄─────────┘
+                 │        ┌──────────▼───────┐           │
+                 │        │     monolith     │           │
+                 │        │  /api/hotels/*   │◄──────────┘
                  │        │  /api/promos/*   │
                  │        └──────────────────┘
                  │
@@ -28,39 +28,38 @@
         │  /api/bookings   │
         └──────────────────┘
 
+![Диаграмма состояния системы после выноса логики бронирования в микросервис](./backend-for-frontend.png)
 
 ## Изменения по компонентам
 
-### 1. apollo-gateway (gateway/index.js)
-
+### 1. apollo-gateway
 - В serviceList добавлены все три субграфа: booking, hotel, promocode.
 - Реализован RemoteGraphQLDataSource с переопределением willSendRequest: заголовок **userid** с клиента копируется в запросы ко всем субграфам (необходимо для корректной работы ACL на стороне booking-subgraph и promocode-subgraph).
 
-### 2. booking-subgraph (booking-subgraph/index.js)
+### 2. booking-subgraph
 
 - Тип Booking @key(fields: "id") с полями: id, userId, hotelId, promoCode, discountPercent, hotel.
-- **Реальные данные**: запрос bookingsByUser выполняет REST-вызов GET /api/bookings?userId= в booking-service (адрес http://booking-service:8080/api).
+- **Получение данных**: запрос bookingsByUser выполняет REST-вызов GET http://booking-service:8080/api/bookings?userId={id} в booking-service.
 - **ACL**: проверяется заголовок userid из запроса. Если он отсутствует - ошибка No user info in the Header.; если не совпадает с запрошенным userId - Wrong user info.
 - Поле hotel возвращает ссылку { id: booking.hotelId }, которую шлюз резолвит через hotel-subgraph (федерация).
 - __resolveReference для загрузки бронирования по id через GET /api/bookings/{id}.
 
-### 3. hotel-subgraph (hotel-subgraph/index.js)
+### 3. hotel-subgraph
 
 - Тип Hotel @key(fields: "id") с полями: id, name, city, stars.
-- **Реальные данные**: загрузка отеля через REST-вызов GET /api/hotels/{id} в монолит (адрес http://monolith:8080/api).
+- **Получение данных**: загрузка отеля через REST-вызов GET http://monolith:8080/api/hotels/{id} в монолит.
 - **Кеширование**: in-memory кеш node-cache с TTL 300 секунд и интервалом очистки 60 секунд - повторные запросы к одному отелю не нагружают монолит.
 - **Маппинг полей**: name <- description (или name), stars <- Math.round(rating).
 - __resolveReference и запрос hotelsByIds используют общую функцию getHotelById с кешированием.
 
-### 4. promocode-subgraph (promocode-subgraph/index.js)
+### 4. promocode-subgraph
 
 - **Новый сервис** на порту **4003**.
 - **@override(from: "booking")** на поле discountPercent - теперь расчёт скидки выполняется в субграфе promocode, а не в booking.
 - Тип DiscountInfo с полями: isValid, originalDiscount, finalDiscount, description, expiresAt.
-- **Реальные данные**: загрузка промокода через REST-вызов GET /api/promos/{code} в монолит.
+- **Получение данных**: загрузка промокода через REST-вызов GET http://monolith:8080/api/promos/{code} в монолит.
 - **Кеширование**: node-cache с TTL 300 секунд.
-- Запросы: promosByCodes(codes), validatePromoCode(code, userId) (POST /api/promos/validate).
-- @requires(fields: "promoCode") - поле discountInfo доступно только при наличии promoCode у брони.
+- Запросы: promosByCodes(codes), validatePromoCode(code, userId) (POST http://monolith:8080/api/promos/validate).
 
 ### 5. docker-compose
 
