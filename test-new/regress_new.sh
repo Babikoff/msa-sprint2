@@ -19,6 +19,7 @@ fail() { echo "❌ $1"; exit 1; }
 
 BASE="${API_URL:-http://localhost:8080}"
 BOOKING_SERVICE_BASE="${BOOKING_SERVICE_URL:-http://host.docker.internal:8085}"
+GATEWAY_BASE="${GATEWAY_URL:-http://host.docker.internal:4000}"
 
 echo ""
 echo "Тесты пользователей..."
@@ -131,3 +132,58 @@ curl -sSf "${BOOKING_SERVICE_BASE}/api/bookings" | grep -q 'test-user-2' && pass
 
 # 7. Получение бронирований пользователя
 curl -sSf "${BOOKING_SERVICE_BASE}/api/bookings?userId=test-user-2" | grep -q 'test-user-2' && pass "Бронирования test-user-2 найдены" || fail "Нет бронирований test-user-2"
+
+echo ""
+echo "Тесты Apollo Gateway (GraphQL)..."
+
+# Утилита: GraphQL-запрос через шлюз (с необязательным заголовком userid)
+graphql_query() {
+  local body="$1"
+  local header="${2:-}"
+  if [[ -n "$header" ]]; then
+    curl -sSf -X POST -H "Content-Type: application/json" -H "$header" "$GATEWAY_BASE/" -d "$body"
+  else
+    curl -sSf -X POST -H "Content-Type: application/json" "$GATEWAY_BASE/" -d "$body"
+  fi
+}
+
+# 1. Отели через шлюз (hotel-subgraph)
+graphql_query '{"query":"query { hotelsByIds(ids: [\"test-hotel-1\"]) { id name city stars } }"}' \
+  | grep -q 'Seoul' && pass "Шлюз: отель test-hotel-1 получен (hotelsByIds)" || fail "Шлюз: отель test-hotel-1 не получен"
+
+# 2. Бронирования пользователя через шлюз (booking-subgraph, ACL по заголовку userid)
+graphql_query '{"query":"query { bookingsByUser(userId: \"test-user-2\") { id userId hotelId promoCode } }"}' 'userid: test-user-2' \
+  | grep -q 'TESTCODE1' && pass "Шлюз: бронирования test-user-2 найдены" || fail "Шлюз: бронирования test-user-2 не найдены"
+
+# 3. Federation: бронирование -> отель (join booking + hotel subgraphs)
+graphql_query '{"query":"query { bookingsByUser(userId: \"test-user-3\") { id hotel { name city } } }"}' 'userid: test-user-3' \
+  | grep -q 'Seoul' && pass "Шлюз: federation бронь->отель работает" || fail "Шлюз: federation бронь->отель сломан"
+
+# 4. Скидка из promocode-subgraph (@override discountPercent)
+graphql_query '{"query":"query { bookingsByUser(userId: \"test-user-2\") { promoCode discountPercent } }"}' 'userid: test-user-2' \
+  | grep -q '10' && pass "Шлюз: discountPercent подтянут из promocode-subgraph" || fail "Шлюз: discountPercent не получен"
+
+# 5. discountInfo для брони с промо (description из monolith)
+graphql_query '{"query":"query { bookingsByUser(userId: \"test-user-2\") { discountInfo { isValid finalDiscount description } } }"}' 'userid: test-user-2' \
+  | grep -q 'Обычный промокод' && pass "Шлюз: discountInfo получен (description)" || fail "Шлюз: discountInfo неверен"
+
+# 6. validatePromoCode через шлюз
+graphql_query '{"query":"query { validatePromoCode(code: \"TESTCODE1\", userId: \"test-user-2\") { isValid originalDiscount finalDiscount } }"}' \
+  | grep -q '10' && pass "Шлюз: validatePromoCode корректен" || fail "Шлюз: validatePromoCode неверен"
+
+# 7. promosByCodes через шлюз
+graphql_query '{"query":"query { promosByCodes(codes: [\"TESTCODE-VIP\", \"TESTCODE1\"]) { code discount vipOnly } }"}' \
+  | grep -q 'TESTCODE-VIP' && pass "Шлюз: промокоды получены" || fail "Шлюз: промокоды не получены"
+
+# 8. Ошибка ACL: запрос без заголовка userid
+resp=$(curl -s -X POST -H "Content-Type: application/json" "$GATEWAY_BASE/" -d '{"query":"query { bookingsByUser(userId: \"test-user-2\") { id } }"}')
+echo "$resp" | grep -q 'No user info in the Header.' && pass "Шлюз: запрос без userid отклонён" || fail "Шлюз: нет ошибки без userid"
+
+# 9. Ошибка ACL: неверный userid в заголовке
+resp=$(curl -s -X POST -H "Content-Type: application/json" -H "userid: test-user-9" "$GATEWAY_BASE/" -d '{"query":"query { bookingsByUser(userId: \"test-user-2\") { id } }"}')
+echo "$resp" | grep -q 'Wrong user info.' && pass "Шлюз: неверный userid отклонён" || fail "Шлюз: неверный userid принят"
+
+# 10. Комбинированный запрос (несколько подграфов в одном запросе)
+resp=$(graphql_query '{"query":"query { hotelsByIds(ids: [\"test-hotel-1\"]) { id city } promosByCodes(codes: [\"TESTCODE1\"]) { code } }"}')
+echo "$resp" | grep -q 'Seoul' && echo "$resp" | grep -q 'TESTCODE1' \
+  && pass "Шлюз: комбинированный запрос работает" || fail "Шлюз: комбинированный запрос сломан"
