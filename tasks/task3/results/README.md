@@ -59,3 +59,22 @@ query {
     }
   },
 }
+
+query {
+  validatePromoCode(code: "TESTCODE1", userId: "test-user-2") {
+    description
+    expiresAt
+    finalDiscount
+    isValid
+    originalDiscount
+  }
+  promosByCodes(codes: "TESTCODE1") {
+    code
+    description
+    discount
+    expired
+    isValid
+    validUntil
+    vipOnly
+  }
+}

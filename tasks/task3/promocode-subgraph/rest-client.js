@@ -5,10 +5,12 @@ export class RestClient {
         this.baseUrl = baseUrl;
     }
 
-    async fetch(path) {
+    async fetch(path, options = {}) {
         let fetchUrl = this.baseUrl + path;
         try {
-            const response = await fetch(fetchUrl);
+            const response = await fetch(fetchUrl, {
+                method: options.method || 'GET',
+            });
             if (!response.ok) {
                 throw new Error(`Fetch error. Status: ${response.status}`);
             }
@@ -18,6 +20,23 @@ export class RestClient {
             let errorMsg = 'Failed to fetch from: ' + fetchUrl;
             console.error(error);
             throw new Error(errorMsg);
+        }
+    }
+
+    async fetchNoThrow(path, options = {}) {
+        let fetchUrl = this.baseUrl + path;
+        try {
+            const response = await fetch(fetchUrl, {
+                method: options.method || 'GET',
+            });
+            if (!response.ok) {
+                console.error(`Fetch error. Status: ${response.status} from: ${fetchUrl}`);
+                return null;
+            }
+            return await response.json();
+        } catch (error) {
+            console.error(error);
+            return null;
         }
     }
 }

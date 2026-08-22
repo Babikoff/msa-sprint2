@@ -40,7 +40,7 @@ const typeDefs = gql`
 
   type Query {
     promosByCodes(codes: [ID!]!): [PromoCode]
-    validatePromoCode(code: String!, hotelId: ID): DiscountInfo!
+    validatePromoCode(code: String!, userId: ID): DiscountInfo!
   }
 `;
 
@@ -131,9 +131,19 @@ const resolvers = {
       console.log('Got promos: ' + JSON.stringify(promos));
       return promos;
     },
-    validatePromoCode: async (_, { code }) => {
-      const promo = await getPromoByPromocode(code);
-      return convertToDiscountInfo(promo);
+    validatePromoCode: async (_, { code, userId }) => {
+      const promoJson = await monolithClient.fetchNoThrow(
+        `/promos/validate?code=${code}&userId=${userId}`,
+        { method: 'POST' }
+      );
+
+      return convertToDiscountInfo(promoJson) || {
+        isValid: false,
+        originalDiscount: 0,
+        finalDiscount: 0,
+        description: "",
+        expiresAt: null,
+      };
     },    
   },
 };
