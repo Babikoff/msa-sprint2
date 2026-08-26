@@ -140,12 +140,37 @@ curl http://localhost:8080/ping
 **Ожидается:**
 pong
 
-### 10. Проверка включения/отключения опции ENABLE_FEATURE_X: ###
+### 10. Проверка включения/отключения опции ENABLE_FEATURE_X в STAGING/PROD: ###
+**Развёртываем службу скрипатами в кластер с опцией STAGING:**
+*& 'C:\Program Files\Git\bin\bash.exe' .\deploy-staging.sh*
+
+ИЛИ
+
+*./deploy-staging.bat*
+
+В отдельном терминале запускаем проброс протов:
+*kubectl port-forward svc/booking-service 8080:80*
+
+**Проверка**
+*curl http://localhost:8080/feature*
+
+**Ожидается:**
+*Feature X is enabled!*
+
 
 #### 10.2. Проверка отключения опции ####
+**Развёртываем службу скрипатами в кластер с опцией PROD:**
+*& 'C:\Program Files\Git\bin\bash.exe' .\deploy-prod.sh*
 
-**Накатываем на кластер конфиг PROD:**
-*helm upgrade --install booking-service ./helm/booking-service --values ./helm/booking-service/values-prod.yaml*
+ИЛИ
 
-**Перезапускаем все реплики booking-service**
-*kubectl rollout restart deployment/booking-service*
+*./deploy-prod.bat*
+
+В отдельном терминале запускаем проброс протов:
+*kubectl port-forward svc/booking-service 8080:80*
+
+**Проверка**
+*curl http://localhost:8080/feature*
+
+**Ожидается:**
+*404 page not found*
