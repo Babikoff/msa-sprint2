@@ -7,7 +7,7 @@ minikube start --driver=docker
 
 ### 2.Проверка статуса Minikube ###
 *minikube status*
-**Ожидается:**
+#### Ожидаемый результат: ####
 minikube
 type: Control Plane
 host: Running
@@ -16,7 +16,7 @@ apiserver: Running
 kubeconfig: Configured
 
 ### 3. Билд docker image ###
-**Ожидается:**
+#### Ожидаемый результат: ####
 docker build -t booking-service:1.0.1 ./booking-service
 [+] Building 4.4s (12/12) FINISHED                                                                                                             docker:desktop-linux
  => [internal] load build definition from Dockerfile                                                                                                           0.1s
@@ -45,12 +45,12 @@ docker build -t booking-service:1.0.1 ./booking-service
 
 ### 4. Загрузка image в Minikube ###
 minikube image load booking-service:1.0.1
-**Ожидается:**
+#### Ожидаемый результат: ####
 Отсутствие вывода при отсутствии ошибок.
 
 ### 5. Накат базовой конфигурации ###
 *helm upgrade --install booking-service ./helm/booking-service --values ./helm/booking-service/values.yaml*
-**Ожидается:**
+#### Ожидаемый результат: ####
 helm upgrade --install booking-service ./helm/booking-service --values ./helm/booking-service/values-prod.yaml
 Release "booking-service" has been upgraded. Happy Helming!
 NAME: booking-service
@@ -69,7 +69,7 @@ helm upgrade --install booking-service ./helm/booking-service --values ./helm/bo
 
 #### 5.2. Накат конфигурации PROD ####
 *helm upgrade --install booking-service ./helm/booking-service --values ./helm/booking-service/values-prod.yaml*
-**Ожидается:**
+#### Ожидаемый результат: ####
 Release "booking-service" has been upgraded. Happy Helming!
 NAME: booking-service
 LAST DEPLOYED: Wed Aug 26 19:42:29 2026
@@ -81,7 +81,7 @@ TEST SUITE: None
 
 **Проверка того, то запущены 3 реплики сервиса:**
 *kubectl get pods,svc*
-**Ожидается:**
+#### Ожидаемый результат: ####
 NAME                                   READY   STATUS              RESTARTS   AGE
 pod/booking-service-5686488498-kglmm   1/1     Running             0          4h10m
 pod/booking-service-5686488498-lm2tq   1/1     Running             0          68s
@@ -94,7 +94,7 @@ service/kubernetes        ClusterIP   10.96.0.1      <none>        443/TCP   42h
 
 ### 6.Включение проброса порта контейнера 8080 на машину хоста ###
 *kubectl port-forward svc/booking-service 8080:80*
-**Ожидается:**
+#### Ожидаемый результат: ####
 Forwarding from 127.0.0.1:8080 -> 8080
 Forwarding from [::1]:8080 -> 8080
 
@@ -105,7 +105,7 @@ Forwarding from [::1]:8080 -> 8080
 
 **Проверка pods/services**
 *& 'C:\Program Files\Git\bin\bash.exe' .\check-status.sh*
-**Ожидается:**
+#### Ожидаемый результат: ####
 
 ▶️ Checking booking-service deployment...
 NAME                               READY   STATUS    RESTARTS   AGE
@@ -129,7 +129,7 @@ pong✅ Reachable
 ### 8.Проверка резолвинга DNS в кластере ###
 *& 'C:\Program Files\Git\bin\bash.exe' .\check-dns.sh*
 
-**Ожидается:**
+#### Ожидаемый результат: ####
 ▶️ Running in-cluster DNS test...
 pongpod "dns-test" deleted from default namespace
 ✅ Success
@@ -137,7 +137,7 @@ pongpod "dns-test" deleted from default namespace
 ### 9. Ping сервиса ###
 Ping с помощью **curl**:
 curl http://localhost:8080/ping            
-**Ожидается:**
+#### Ожидаемый результат: ####
 pong
 
 ### 10. Проверка включения/отключения опции ENABLE_FEATURE_X в STAGING/PROD: ###
@@ -154,7 +154,7 @@ pong
 **Проверка**
 *curl http://localhost:8080/feature*
 
-**Ожидается:**
+#### Ожидаемый результат: ####
 *Feature X is enabled!*
 
 
@@ -172,5 +172,5 @@ pong
 **Проверка**
 *curl http://localhost:8080/feature*
 
-**Ожидается:**
+#### Ожидаемый результат: ####
 *404 page not found*
