@@ -2,15 +2,18 @@
 
 ## Что сделано
 
-Автоматизировано развёртывание и тестирование **booking-service**: Docker-образ, Helm-чарт с пробами и values для staging/prod, CI/CD-пайплайн (GitLab CI) и деплой в Minikube. Фича-флаг ENABLE_FEATURE_X управляет маршрутом /feature.
+Автоматизировано развёртывание и тестирование **booking-service**: 
+- Docker-образ
+- Helm-чарт с пробами и values для staging/prod
+- CI/CD-пайплайн (GitLab CI)
+- Деплой в Minikube 
+- Фича-флаг ENABLE_FEATURE_X управляет маршрутом /feature.
 
 ## Изменения по компонентам
 
 ### 1. Docker-образ (booking-service/)
-- Сборка `docker build` на базе golang:1.21-alpine, EXPOSE 8080.
-- `/ping` → `pong`.
-- При ENABLE_FEATURE_X=true появляется маршрут `/feature`.
-- Образ загружается в Minikube через `minikube image load`.
+- Добавлено открытие порта через EXPOSE 8080.
+- Созданный докером образ загружается в Minikube через `minikube image load`.
 
 ### 2. Helm-чарт (helm/booking-service/)
 - Deployment с livenessProbe и readinessProbe по `/ping` (HTTP GET :8080), periodSeconds вынесены в values (liveness 20, readiness 10).
@@ -19,14 +22,16 @@
 - Два набора: values-staging.yaml (replicaCount 1, ENABLE_FEATURE_X=true) и values-prod.yaml (replicaCount 3, ENABLE_FEATURE_X=false).
 
 ### 3. CI/CD (.gitlab-ci.yml)
-- Стадии build -> test -> deploy -> tag.
-- build: docker build; test: docker run + проверка /ping + docker rm; deploy: minikube image load + helm upgrade; tag: git-тег с timestamp (main).
-- Локально: `gitlab-ci-local build test deploy tag` (Makefile, package.json).
+Проработаны стадии:
+- build: docker build; 
+- test: docker run + проверка /ping + docker rm; 
+- deploy: minikube image load + helm upgrade; 
+- tag: git-тег с timestamp (main).
 
-### 4. Скрипты деплоя и проверок
-- deploy-common.sh/.bat: build -> smoke-test /ping -> minikube image load -> helm upgrade -> kubectl rollout status.
-- deploy-staging.* и deploy-prod.* для соответствующих values.
-- check-status.sh, check-helm.bat (template+lint), check-dns.sh.
+### 4. Добавлены скрипты деплоя
+- Базовый универсальный скрипт **deploy-common.sh/.bat**: build -> smoke-test /ping -> minikube image load -> helm upgrade -> kubectl rollout status.
+- **deploy-staging.*** и **deploy-prod.*** конкретизация деплоя для STAGING или PROD.
+- **check-helm.bat** (template+lint), check-dns.sh.
 
 ### 5. Service Discovery через DNS
 - Внутри Minikube сервис доступен как http://booking-service/ping из другого пода; проверка скриптом check-dns.sh.
@@ -40,7 +45,7 @@
 ## Запуск сервиса booking-service в minikube
 
 ### 1.Запуск Kubernetes cluster ###
-minikube start --driver=docker
+*minikube start --driver=docker*
 
 ### 2.Проверка статуса Minikube ###
 *minikube status*
