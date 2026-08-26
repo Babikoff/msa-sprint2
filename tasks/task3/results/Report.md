@@ -49,42 +49,42 @@
 - Тип Hotel @key(fields: "id") с полями: id, name, city, stars.
 - **Получение данных**: загрузка отеля через REST-вызов GET http://monolith:8080/api/hotels/{id} в монолит.
 - **Кеширование**: in-memory кеш node-cache с TTL 300 секунд и интервалом очистки 60 секунд - повторные запросы к одному отелю не нагружают монолит.
-- **Маппинг полей**: name <- description (или name), stars <- Math.round(rating).
+- Сделан **маппинг полей**: name <- description (или name), stars <- Math.round(rating).
 - __resolveReference и запрос hotelsByIds используют общую функцию getHotelById с кешированием.
 
 ### 4. promocode-subgraph
 
 - **Новый сервис** на порту **4003**.
-- **@override(from: "booking")** на поле discountPercent - теперь расчёт скидки выполняется в субграфе promocode, а не в booking.
-- Тип DiscountInfo с полями: isValid, originalDiscount, finalDiscount, description, expiresAt.
+- Сделан **@override(from: "booking")** на поле discountPercent и теперь расчёт скидки выполняется в субграфе promocode, а не в booking.
+- Добавлен тип **DiscountInfo** с полями: isValid, originalDiscount, finalDiscount, description, expiresAt.
 - **Получение данных**: загрузка промокода через REST-вызов GET http://monolith:8080/api/promos/{code} в монолит.
 - **Кеширование**: node-cache с TTL 300 секунд.
 - Запросы: promosByCodes(codes), validatePromoCode(code, userId) (POST http://monolith:8080/api/promos/validate).
 
 ### 5. docker-compose
 
-- Сервис promocode-subgraph добавлен в общий compose-файл.
-- Используется **внешняя сеть hotelio-net** (создаётся в task2) - это обеспечивает связность с монолитом и booking-service.
-- Доступ с хоста по портам: 4000 (gateway), 4001 (booking), 4002 (hotel), 4003 (promocode).
+- Сервис promocode-subgraph добавлен в общий docker-compose-файл.
+- Используется та же **внешняя сеть hotelio-net**, что и в task2. Это обеспечивает связность с монолитом и booking-service.
+- Для выполнения запросов GraphQL можно использовать веб утилиту, запущеную на адраесах: http://localhost:4000 (gateway), http://localhost:4001 (booking), http://localhost:4002 (hotel), http://localhost:4003 (promocode).
 
 ### 6. Новые тесты
-В каталоге **/test-new** находятся регрессионные тесты, созданные на базе исходных тестов, адаптированные под разделение монолита и расширенный для Apollo Gateway (федерация, ACL, discountPercent, discountInfo, validatePromoCode, комбинированные запрос 
+В каталоге **/test-new** находятся регрессионные тесты, созданные на базе исходных тестов, адаптированные под разделение монолита и расширенный для Apollo Gateway. 
 
 ## Особенности реализации
 
 1. Все субграфы выполняют реальные вызовы в monolith и booking-service. Это гарантирует актуальность данных и корректную работу ACL.
 2. **Два docker-compose файла** - для запуска полного окружения необходимо поднять оба:
-   - tasks/task2/docker-compose.yml - monlith, booking-service, Kafka, базы данных;
-   - tasks/task3/docker-compose.yml - GraphQL-шлюз и субграфы.
+   - tasks/task2/docker-compose.yml для monlith, booking-service, Kafka и баз данных;
+   - tasks/task3/docker-compose.yml для GraphQL-шлюза и субграфов.
 
 ## Как запускать
 
 Через ***bash или Terminal в VSCode*** 
-# 1. Поднять через docker compose инфраструктуру из task2 (монолит, booking-service, Kafka, БД)
+### 1. Поднять через docker compose инфраструктуру из task2 (monolith, booking-service, Kafka, базы данных)
 cd tasks/task2
 docker compose up -d --build
 
-# 2. Поднять через docker compose GraphQL-шлюз и субграфы из task3
+### 2. Поднять через docker compose GraphQL-шлюз и субграфы из task3
 cd ../task3
 docker compose up -d --build
 
@@ -93,9 +93,9 @@ docker compose up -d --build
 
 ### Запуск регрессионных тестов
 
-bash или Terminal в VSCode
+В bash или Terminal в VSCode
 # Из корня проекта
-run_regress_tests_new.bat
+./run_regress_tests_new.bat
 
 
 ### Результаты
@@ -103,7 +103,7 @@ run_regress_tests_new.bat
 Все тесты успешно пройдены (см. test-log.txt):
 
 
-## Артефакты в results/
+## Артефакты в results:
 
 | Файл           | Назначение |
 |----------------|------------|
@@ -113,5 +113,6 @@ run_regress_tests_new.bat
 
 ## Что отложенно на будущее
 
-Решение проблемы N+1 в сабграфе отелей и промокодов было сделано через кеширование. В сущности это не полноценное решение проблемы, а компенсация последствий. Для полноценного решения проблемы нужно добавить в код монолита методы получения отелей и промокодов по списку идентификаторов и вызывать их, а не одиночные методы.
+Решение проблемы N+1 в сабграфе отелей и промокодов было сделано через кеширование. В сущности это не полноценное решение проблемы N+1, а компенсация последствий. Для полноценного решения проблемы нужно добавить в код монолита методы получения отелей и промокодов по списку идентификаторов и вызывать их, а не одиночные методы.
+
 Для реалзации данного решения также потребуется сделать pagination или chuncking, так как при большом количестве данных нужно будет иметь возможность получать данные пачками, а не сразу все. 
