@@ -33,4 +33,4 @@ readinessProbe:
   periodSeconds: 10
 
 env:
-  ENABLE_FEATURE_X: "true"
+  ENABLE_FEATURE_X: "false"

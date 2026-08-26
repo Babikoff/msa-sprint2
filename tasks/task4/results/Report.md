@@ -2,10 +2,10 @@
 
 ## Запуск сервиса booking-service в minikube
 
-**1.Запуск Kubernetes cluster**
+### 1.Запуск Kubernetes cluster ###
 minikube start --driver=docker
 
-**2.Проверка статуса Minikube**
+### 2.Проверка статуса Minikube ###
 *minikube status*
 **Ожидается:**
 minikube
@@ -15,7 +15,7 @@ kubelet: Running
 apiserver: Running
 kubeconfig: Configured
 
-**3. Билд docker image**
+### 3. Билд docker image ###
 **Ожидается:**
 docker build -t booking-service:1.0.1 ./booking-service
 [+] Building 4.4s (12/12) FINISHED                                                                                                             docker:desktop-linux
@@ -43,16 +43,16 @@ docker build -t booking-service:1.0.1 ./booking-service
  => => naming to docker.io/library/booking-service:1.0.1                                                                                                       0.0s
  => => unpacking to docker.io/library/booking-service:1.0.1   
 
-**4. Загрузка image в Minikube**
+### 4. Загрузка image в Minikube ###
 minikube image load booking-service:1.0.1
 **Ожидается:**
 Отсутствие вывода при отсутствии ошибок.
 
-**5. Накат базовой конфигурации**
-helm upgrade --install booking-service ./helm/booking-service --values ./helm/booking-service/values.yaml
+### 5. Накат базовой конфигурации ###
+*helm upgrade --install booking-service ./helm/booking-service --values ./helm/booking-service/values.yaml*
 **Ожидается:**
 helm upgrade --install booking-service ./helm/booking-service --values ./helm/booking-service/values-prod.yaml
-Release "booking-service" has been upgraded. Happy Helming!                                                  
+Release "booking-service" has been upgraded. Happy Helming!
 NAME: booking-service
 LAST DEPLOYED: Wed Aug 26 16:21:08 2026
 NAMESPACE: default
@@ -62,25 +62,48 @@ DESCRIPTION: Upgrade complete
 TEST SUITE: None
 
 
-**5.1. Накат конфигурации STAGING**
+#### 5.1. Накат конфигурации STAGING ####
 helm upgrade --install booking-service ./helm/booking-service --values ./helm/booking-service/values-staging.yaml
 
-***ИЛИ***
+**ИЛИ**
 
-**5.2. Накат конфигурации PROD**
-
-**6.Включение проброса порта контейнера 8080 на машину хоста**
+#### 5.2. Накат конфигурации PROD ####
+*helm upgrade --install booking-service ./helm/booking-service --values ./helm/booking-service/values-prod.yaml*
 **Ожидается:**
-kubectl port-forward svc/booking-service 8080:80
+Release "booking-service" has been upgraded. Happy Helming!
+NAME: booking-service
+LAST DEPLOYED: Wed Aug 26 19:42:29 2026
+NAMESPACE: default
+STATUS: deployed
+REVISION: 15
+DESCRIPTION: Upgrade complete
+TEST SUITE: None
+
+**Проверка того, то запущены 3 реплики сервиса:**
+*kubectl get pods,svc*
+**Ожидается:**
+NAME                                   READY   STATUS              RESTARTS   AGE
+pod/booking-service-5686488498-kglmm   1/1     Running             0          4h10m
+pod/booking-service-5686488498-lm2tq   1/1     Running             0          68s
+pod/booking-service-5686488498-trtdn   1/1     Running             0          68s
+pod/booking-service-686f8d4749-ns44n   0/1     ErrImageNeverPull   0          68s
+
+NAME                      TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+service/booking-service   ClusterIP   10.99.82.142   <none>        80/TCP    30h
+service/kubernetes        ClusterIP   10.96.0.1      <none>        443/TCP   42h
+
+### 6.Включение проброса порта контейнера 8080 на машину хоста ###
+*kubectl port-forward svc/booking-service 8080:80*
+**Ожидается:**
 Forwarding from 127.0.0.1:8080 -> 8080
 Forwarding from [::1]:8080 -> 8080
 
 
-***Далее всё делаем в новом терминале:***
+**Далее всё делаем в новом терминале:**
 
-**7. Проверка статуса**
+### 7. Проверка статуса ###
 
-***Проверка pods/services***
+**Проверка pods/services**
 *& 'C:\Program Files\Git\bin\bash.exe' .\check-status.sh*
 **Ожидается:**
 
@@ -103,7 +126,7 @@ booking-service default         14              2026-08-26 16:21:08.3281014 +050
 ▶️ Quick curl (if port-forward already running):
 pong✅ Reachable
 
-**8.Проверка резолвинга DNS в кластере**
+### 8.Проверка резолвинга DNS в кластере ###
 *& 'C:\Program Files\Git\bin\bash.exe' .\check-dns.sh*
 
 **Ожидается:**
@@ -111,8 +134,18 @@ pong✅ Reachable
 pongpod "dns-test" deleted from default namespace
 ✅ Success
 
-**9. Ping сервиса**
+### 9. Ping сервиса ###
 Ping с помощью **curl**:
 curl http://localhost:8080/ping            
-*Ожидается:*
+**Ожидается:**
 pong
+
+### 10. Проверка включения/отключения опции ENABLE_FEATURE_X: ###
+
+#### 10.2. Проверка отключения опции ####
+
+**Накатываем на кластер конфиг PROD:**
+*helm upgrade --install booking-service ./helm/booking-service --values ./helm/booking-service/values-prod.yaml*
+
+**Перезапускаем все реплики booking-service**
+*kubectl rollout restart deployment/booking-service*
