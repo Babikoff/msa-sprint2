@@ -2,12 +2,18 @@
 
 ## Что сделано
 
-Автоматизировано развёртывание и тестирование **booking-service**: 
-- Docker-образ
-- Helm-чарт с пробами и values для staging/prod
-- CI/CD-пайплайн (GitLab CI)
-- Деплой в Minikube 
+Разработана обвязка для автоматизации CI/CD-процесса микросервиса **booking-service** в локальный Kubernetes-кластер Minikube с помощью Helm.
+
+В процессе развёртывания **booking-service**: 
+- Создаётся Docker-образ
+- Задействуется Helm-чарт с пробами и values для staging/prod
+- Выполняется CI/CD-пайплайн (GitLab CI)
+- И как результат выполнения - деплой в Minikube
+
+В зависимости от типа развёртывания (STAGING или PROD) в итоговые конфиги Kubernetes устанавливаются параметры: 
 - Фича-флаг ENABLE_FEATURE_X управляет маршрутом /feature.
+- Количество реплик
+- Параметры среды запуска (CPU, Memory и т.п)
 
 ## Изменения по компонентам
 
@@ -19,7 +25,7 @@
 - Deployment с livenessProbe и readinessProbe по `/ping` (HTTP GET :8080), periodSeconds вынесены в values (liveness 20, readiness 10).
 - Service типа ClusterIP: 80 -> targetPort 8080.
 - values.yaml содержит replicaCount, image.name/tag/pullPolicy, env[], resources (requests/limits), ENABLE_FEATURE_X.
-- Два набора: values-staging.yaml (replicaCount 1, ENABLE_FEATURE_X=true) и values-prod.yaml (replicaCount 3, ENABLE_FEATURE_X=false).
+- Два файла расширения для values.yaml для кастомизации деплоя под среду развёртывания: values-staging.yaml (replicaCount 1, ENABLE_FEATURE_X=true) и values-prod.yaml (replicaCount 3, ENABLE_FEATURE_X=false).
 
 ### 3. CI/CD (.gitlab-ci.yml)
 Проработаны стадии:

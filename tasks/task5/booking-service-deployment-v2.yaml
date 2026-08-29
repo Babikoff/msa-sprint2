@@ -1,0 +1,27 @@
+# Этот файл описывает конфигурацию для развёртывания микросервиса 
+# Booking ВЕРСИИ 2 в Kubernetes. 
+# Он отображает информацию о количестве реплик, образе контейнера и портах.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-service-v2
+  labels:
+    app: booking
+    version: v2
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: booking
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: booking
+        version: v2
+    spec:
+      containers:
+      - name: booking
+        image: booking:V2 # 
+        ports:
+        - containerPort: 80
