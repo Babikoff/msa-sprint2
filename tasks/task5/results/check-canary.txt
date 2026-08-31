@@ -1,0 +1,4 @@
+# check-canary.sh (100 requests from mesh)
+v1=91 v2=9
+(≈ 91% v1 / 9% v2)
+RESULT: Канареечный Release работает: ~9% трафика идёт на v2.

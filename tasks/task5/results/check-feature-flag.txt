@@ -1,0 +1,6 @@
+# check-feature-flag.sh
+--- Запрос БЕЗ фича-флага ---
+pong-v1
+--- Запрос С заголовком X-Feature-Enabled: true ---
+pong-v2 (feature enabled)
+RESULT: Фича-флаг работает: запрос с X-Feature-Enabled:true попал на v2.

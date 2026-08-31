@@ -1,0 +1,8 @@
+# check-istio.sh
+- istio-system pods:
+  istio-egressgateway      1/1 Running
+  istio-ingressgateway     1/1 Running
+  istiod                   1/1 Running
+- istioctl version: 1.30.4
+- istio-injection (namespace default): enabled
+- booking pods: READY 2/2 (app + sidecar Envoy)
