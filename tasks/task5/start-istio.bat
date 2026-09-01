@@ -41,9 +41,13 @@ echo 4) Включите автоматическую вставку sidecar-п�
 echo где будут работать микросервисы Booking
 kubectl label namespace default istio-injection=enabled --overwrite
 
-echo 5) Сборка и загрузка образа booking-service в Minikube
-docker build -t booking-service:latest ./booking-service
-minikube image load booking-service:latest
+
+@REM echo 5) Сборка и загрузка образа booking-service в Minikube
+@REM docker build -t booking-service:latest ./booking-service
+@REM minikube image load booking-service:latest
+
+echo 5) Сборка, загрузка, генерация и накат конфигов через Helm
+call "%~dp0deploy-common.bat" STAGING ./helm/booking-service/values-staging.yaml ./helm/booking-service/values-v2.yaml test-booking-staging 8081
 
 echo 6) Применение манифестов Booking
 echo Применение конфигурации развёртывает микросервис Booking в кластере Kubernetes

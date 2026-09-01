@@ -1,4 +1,7 @@
-replicaCount: 1
+global:
+  appName: booking 
+
+replicaCount: 2 # default value
 
 image:
   name: booking-service

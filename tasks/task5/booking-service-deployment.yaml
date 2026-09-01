@@ -2,24 +2,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: booking-v1
+  name: booking-service-v1
   labels:
-    app: booking
+    app: booking-service
     version: v1
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: booking
+      app: booking-service
       version: v1
   template:
     metadata:
       labels:
-        app: booking
+        app: booking-service
         version: v1
     spec:
       containers:
-      - name: booking
+      - name: booking-service
         image: booking-service:latest
         imagePullPolicy: IfNotPresent
         ports:

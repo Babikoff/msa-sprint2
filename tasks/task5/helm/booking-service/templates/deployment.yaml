@@ -1,18 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Release.Name }}-{{ .Values.version }}
   labels:
     app: {{ .Release.Name }}
+    version: {{ .Values.version }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app: {{ .Release.Name }}
+      version: {{ .Values.version }}
   template:
     metadata:
       labels:
         app: {{ .Release.Name }}
+        version: {{ .Values.version }}
     spec:
       containers:
         - name: {{ .Chart.Name }}
@@ -21,6 +24,8 @@ spec:
           ports:
             - containerPort: {{ .Values.service.targetPort }}
           env:
+            - name: APP_VERSION
+              value: {{ .Values.version }}          
             - name: ENABLE_FEATURE_X
               value: "{{.Values.env.ENABLE_FEATURE_X}}"
           livenessProbe:
