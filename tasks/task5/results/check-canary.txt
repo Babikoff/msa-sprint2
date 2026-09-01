@@ -1,7 +1,1 @@
 ▶️ Checking canary release (90% v1, 10% v2)...
-   Client pod: curl-client-68476cfd9f-t4z2r   Запросов: 100
-
-v1=95 v2=5
-  (≈ 95% v1 / 5% v2)
-
-✅ Канареечный Release работает: ~5% трафика идёт на v2.

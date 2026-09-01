@@ -1,10 +1,1 @@
 ▶️ Проверка Feature Flag (X-Feature-Enabled: true)...
-   Client pod: curl-client-68476cfd9f-t4z2r
-
---- Запрос БЕЗ фича-флага (обычная маршрутизация) ---
-pong-v1  x_feature_route_flag:
-
---- Запрос С заголовком X-Feature-Enabled: true ---
-pong-v2 (feature enabled) x_feature_route_flag:v2
-
-✅ Фича-флаг работает: запрос с X-Feature-Enabled:true попал на v2.

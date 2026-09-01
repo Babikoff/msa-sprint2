@@ -1,23 +1,6 @@
-▶️ 1) Поды Istio (istio-system)...
+▶️ Проверка установки Istio...
 NAME                                    READY   STATUS    RESTARTS      AGE
-istio-egressgateway-748dd55df9-5v6b7    1/1     Running   3 (37m ago)   2d5h
-istio-ingressgateway-6cdcd6f8c7-5tshb   1/1     Running   3 (37m ago)   2d5h
-istiod-6676d5f5fd-nttx6                 1/1     Running   3 (37m ago)   2d5h
-
-▶️ 2) Версия istioctl...
-client version: 1.30.4
-
-▶️ 3) Метка istio-injection на namespace default...
-enabled
-
-▶️ 4) Поды booking (должны быть READY 2/2 — приложение + sidecar Envoy)...
-NAME                          READY   STATUS    RESTARTS   AGE
-booking-v1-68fb67c994-spslc   2/2     Running   0          4m56s
-booking-v1-68fb67c994-v522f   2/2     Running   0          25m
-booking-v1-68fb67c994-zphtm   2/2     Running   0          35m
-booking-v2-677bcbd8ff-9b8bx   2/2     Running   0          35m
-
-▶️ 5) Количество контейнеров в первом поде booking (2 = есть sidecar)...
-booking
-
-✅ Проверка Istio завершена.
+istio-egressgateway-748dd55df9-5v6b7    1/1     Running   3 (70m ago)   2d6h
+istio-ingressgateway-6cdcd6f8c7-5tshb   1/1     Running   3 (70m ago)   2d6h
+istiod-6676d5f5fd-nttx6                 1/1     Running   3 (70m ago)   2d6h
+▶️ Проверка Istio инъекции в default namespace...
