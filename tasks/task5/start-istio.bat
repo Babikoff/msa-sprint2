@@ -41,43 +41,40 @@ echo 4) Включите автоматическую вставку sidecar-п�
 echo где будут работать микросервисы Booking
 kubectl label namespace default istio-injection=enabled --overwrite
 
-
-@REM echo 5) Сборка и загрузка образа booking-service в Minikube
-@REM docker build -t booking-service:latest ./booking-service
-@REM minikube image load booking-service:latest
-
 echo 5) Сборка, загрузка, генерация и накат конфигов через Helm
-call "%~dp0deploy-common.bat" STAGING ./helm/booking-service/values-staging.yaml ./helm/booking-service/values-v2.yaml test-booking-staging 8081
+call "%~dp0deploy-common.bat" STAGING ./helm/booking-service/values-staging.yaml test-booking-staging 8081
+if errorlevel 1 (
+    echo [ERROR] deploy-common.bat завершился ошибкой. Остановка.
+    exit /b 1
+)
 
-echo 6) Применение манифестов Booking
-echo Применение конфигурации развёртывает микросервис Booking в кластере Kubernetes
-echo с автоматической вставкой Sidecar-прокси для управления трафиком.
-kubectl apply -f booking-service-deployment.yaml
-kubectl apply -f booking-service-service.yaml
-
-echo Развёртываем НОВУЮ ВЕРСИЮ (v2) микросервиса Booking в кластере Kubernetes
-kubectl apply -f booking-service-deployment-v2.yaml
-
-echo Применение конфигурации трафика настраивает маршрутизацию и балансировку нагрузки
+echo 6) Применение конфигурации трафика Istio (VirtualService + DestinationRule)
 echo (канареечный Release 90/10, фича-флаг, retries, Circuit Breaking)
 kubectl apply -f booking-service-traffic.yaml
+if errorlevel 1 goto :error
 
 echo Фича-флаг через EnvoyFilter (заголовок X-Feature-Enabled)
 kubectl apply -f booking-service-envoy-filter.yaml
+if errorlevel 1 goto :error
 
 echo 7) Проверка
-kubectl rollout status deployment/booking-v1 --timeout=120s
-kubectl rollout status deployment/booking-v2 --timeout=120s
+kubectl rollout status deployment/booking-service-v1 --timeout=120s
+kubectl rollout status deployment/booking-service-v2 --timeout=120s
 kubectl get pods -n istio-system
-kubectl get pods -l app=booking
+kubectl get pods -l app=booking-service
 kubectl get virtualservice,destinationrule,envoyfilter
 
 echo.
 echo ============================================================
-echo Деплой завершён. 
+echo Деплой завершён.
 echo ============================================================
 
-echo Если нужно вызвать сервис напрямую (curl http://localhost:8080/ping), 
-echo то можно открыть порт командой: "kubectl port-forward svc/booking 8080:80" 
+echo Если нужно вызвать сервис напрямую (curl http://localhost:8080/ping),
+echo то можно открыть порт командой: "kubectl port-forward svc/booking 8080:80"
 echo и выполнять тестовые запросы к сервису из другого терминала.
-endlocal
+exit /b 0
+
+:error
+echo.
+echo [ERROR] Ошибка на этапе применения конфигов Istio (kubectl apply). Остановка.
+exit /b 1
