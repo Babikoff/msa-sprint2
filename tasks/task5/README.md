@@ -36,18 +36,20 @@ C:\Istio\istio-1.30.4\bin\istioctl install --set profile=demo -y
 # 3. Автоинъекция sidecar в namespace default
 kubectl label namespace default istio-injection=enabled --overwrite
 
-# 4. Сборка образа и загрузка в Minikube
-docker build -t booking-service:latest ./booking-service
-minikube image load booking-service:latest
+# 4. Сборка образа и загрузка в Minikube (делает deploy-common.bat)
+#    docker build -t booking-service:latest -t booking-service:<tag> ./booking-service
+#    minikube image load booking-service:latest ; minikube image load booking-service:<tag>
 
-# 5. Применение манифестов
-kubectl apply -f booking-service-deployment.yaml      # v1
-kubectl apply -f booking-service-deployment-v2.yaml   # v2
-kubectl apply -f booking-service-service.yaml          # Service "booking" 80->8080
-kubectl apply -f booking-service-traffic.yaml          # VirtualService + DestinationRule
-kubectl apply -f booking-service-envoy-filter.yaml     # фича-флаг через EnvoyFilter
+# 5. Деплой версий v1/v2 через Helm (обе версии рендерятся из одного релиза, список versions: в values.yaml)
+helm upgrade --install booking-service ./helm/booking-service \
+    -f ./helm/booking-service/values-staging.yaml \
+    --set image.tag=<tag> --set image.pullPolicy=IfNotPresent
 
-# 6. Тест-клиент ИЗ mesh (нужен, чтобы запросы шли через Envoy и VirtualService работал)
+# 6. Только Istio-конфиги трафика (VirtualService + DestinationRule + EnvoyFilter)
+kubectl apply -f booking-service-traffic.yaml
+kubectl apply -f booking-service-envoy-filter.yaml
+
+# 7. Тест-клиент ИЗ mesh (нужен, чтобы запросы шли через Envoy и VirtualService работал)
 kubectl apply -f test-client.yaml
 ```
 
@@ -56,21 +58,22 @@ kubectl apply -f test-client.yaml
 | Файл | Назначение |
 |---|---|
 | `booking-service/main.go` | Сервис: `/ping`→`pong-<version>`, при `X-Feature-Enabled: true` → `pong-v2 (feature enabled)`. Версия задаётся env `APP_VERSION`. |
-| `booking-service-deployment.yaml` | Deployment `booking-v1` (label `version: v1`, `APP_VERSION=v1`). |
-| `booking-service-deployment-v2.yaml` | Deployment `booking-v2` (label `version: v2`, `APP_VERSION=v2`, `ENABLE_FEATURE_X=true`). |
-| `booking-service-service.yaml` | Service `booking` (selector `app: booking`, порт 80→8080). |
+| `helm/booking-service` | Helm-chart: оба Deployment (`booking-service-v1`/`v2`) рендерятся из одного релиза (цикл по `versions:` в `values.yaml`) + Service `booking-service`. |
+| `booking-service-deployment.yaml` | Статик-аналог Deployment v1 (для ручного деплоя без Helm). |
+| `booking-service-deployment-v2.yaml` | Статик-аналог Deployment v2 (для ручного деплоя без Helm). |
+| `booking-service-service.yaml` | Статик-аналог Service (для ручного деплоя без Helm). |
 | `booking-service-traffic.yaml` | VirtualService (канарейка 90/10 + фича-флаг + retries) и DestinationRule (subsets v1/v2 + Circuit Breaking). |
 | `booking-service-envoy-filter.yaml` | EnvoyFilter (LUA): при `X-Feature-Enabled: true` добавляет внутренний заголовок для маршрутизации на v2. |
-| `start-istio.bat` | Полная установка/деплой одной командой. |
+| `start-istio.bat` | Полная установка/деплой одной командой (Helm + Istio-конфиги трафика). |
 
 ## 4. Управление трафиком (VirtualService / DestinationRule)
 
-**VirtualService `booking`** — маршруты по порядку:
+**VirtualService `booking-service`** — маршруты по порядку:
 1. **Фича-флаг**: `match` по заголовку `x-feature-enabled: exact "true"` → 100% на subset `v2`.
 2. **Канарейка + retries**: вес `v1=90`, `v2=10`; `retries` (attempts 3,
    perTryTimeout 2s, retryOn `gateway-error,connect-failure,refused-stream,reset`).
 
-**DestinationRule `booking`** — **Circuit Breaking**:
+**DestinationRule `booking-service`** — **Circuit Breaking**:
 - `trafficPolicy.connectionPool` (maxConnections, maxPendingRequests, maxRequestsPerConnection) — на весь хост и в каждом subset.
 - `outlierDetection` (consecutive5xxErrors: 3, interval: 10s, baseEjectionTime: 30s) —
   автоматическое исключение «плохих» подов.
@@ -82,7 +85,7 @@ kubectl apply -f test-client.yaml
 ### Fallback (управление отказами)
 Istio не делает пер-запросный failover между weighted-подмножествами в рамках одного
 маршрута. По ТЗ «погасите один из подов» — скрипт проверяет устойчивость:
-удаляется один под `booking-v1`, Envoy выводит мёртвый endpoint из балансировки,
+удаляется один под `booking-service-v1`, Envoy выводит мёртвый endpoint из балансировки,
 retries + outlierDetection направляют трафик на оставшиеся поды; сервис продолжает
 отвечать 200. Подробнее — `check-fallback.sh`.
 

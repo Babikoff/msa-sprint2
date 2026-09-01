@@ -82,7 +82,7 @@ if errorlevel 1 goto :error
 REM ---------- [5/5] Wait for rollout ----------
 echo.
 echo [5/5] Waiting for rollout (versions v1 and v2) ...
-REM Note: versions are HARDCODED
+REM Note: версии v1/v2 задаются списком versions: в values.yaml (цикл по ним в templates/deployment.yaml)
 kubectl rollout status deployment/%RELEASE_NAME%-v1 --timeout=120s
 if errorlevel 1 goto :error
 kubectl rollout status deployment/%RELEASE_NAME%-v2 --timeout=120s

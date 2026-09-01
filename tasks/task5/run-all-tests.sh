@@ -17,9 +17,9 @@ kubectl apply -f test-client.yaml
 
 echo
 echo "=== Ожидание готовности подов ==="
-kubectl wait --for=condition=ready pod -l app=booking --timeout=180s
+kubectl wait --for=condition=ready pod -l app=booking-service --timeout=180s
 kubectl wait --for=condition=ready pod -l app=curl-client --timeout=120s
-kubectl get pods -l app=booking
+kubectl get pods -l app=booking-service
 
 run_check() {
     name=$1
@@ -38,6 +38,6 @@ run_check check-fallback
 echo
 echo "=============================================="
 echo " Все проверки завершены. Текущее состояние:"
-kubectl get pods -l app=booking
+kubectl get pods -l app=booking-service
 echo " Результаты сохранены в $RESULTS/"
 echo "=============================================="

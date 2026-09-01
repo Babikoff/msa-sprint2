@@ -1,7 +1,7 @@
 # Task 5 — отчёт о проделанной работе
 
 ## Цель
-Настроить управление трафиком микросервиса **booking** в Minikube с помощью
+Настроить управление трафиком микросервиса **booking-service** в Minikube с помощью
 **Istio Service Mesh**: канареечный Release (90/10), retries, Circuit Breaking,
 фича-флаг через заголовок `X-Feature-Enabled: true` и EnvoyFilter.
 
@@ -15,7 +15,7 @@
 
 ### 2. Две версии сервиса (v1 / v2)
 - `booking-service/main.go`: `/ping` возвращает `pong-v<APP_VERSION>`;
-  при `X-Feature-Enabled: true` → `pong-v2 (feature enabled)`. Версия из env.
+  при `X-Feature-Enabled: true` --> `pong-v2 (feature enabled)`. Версия из env.
 - Deployment `booking-v1` (label `version: v1`, `APP_VERSION=v1`, 3 реплики).
 - Deployment `booking-v2` (label `version: v2`, `APP_VERSION=v2`, `ENABLE_FEATURE_X=true`, 1 реплика).
 - Service `booking` — selector `app: booking`, порт 80 → targetPort 8080.
@@ -32,9 +32,14 @@ LUA-фильтр на `HTTP_FILTER` (SIDECAR_OUTBOUND): при `X-Feature-Enable
 добавляет внутренний заголовок `x-feature-route: v2`. Рабочая маршрутизация на v2
 подтверждается header-match в VirtualService.
 
-### 5. Проверочные скрипты
-`check-istio.sh`, `check-canary.sh`, `check-fallback.sh`, `check-feature-flag.sh`.
-Запросы идут ИЗ mesh (тест-клиент `curl-client`), чтобы применялся VirtualService.
+### 5. Cкрипты для деплоя
+Для автоматического деплоя в кластер Minikube с применением Helm и Istio запустите `./start-istio.bat`.
+Данный скрипт в свою очередь запустит скрипт билда и деплоя с помощью Helm `deploy-common.bat` созданный на основе одноимённого скипта из задачи 4.
+
+### 6. Cкрипты для тестирования
+Для тестирования запустите `./run-all-tests.bat` или `run-all-tests.sh`. Эти скрипты последовательно запустят предложенные в задании скрипты `check-istio.sh`, `check-canary.sh`, `check-fallback.sh`, `check-feature-flag.sh`.
+
+Все скрипты выполняются внутри кластера на поде `curl-client`.
 
 ## Результаты проверок
 
@@ -71,10 +76,4 @@ pong-v2 (feature enabled)
 ```
 
 ## Особенности и принятые решения
-1. **Проверка из mesh**: обычный `kubectl port-forward svc/booking` минует
-   VirtualService (входящий трафик прокидывается напрямую на под). Поэтому проверочные
-   скрипты выполняют запросы из пода `curl-client` с sidecar (outbound-путь).
-2. **Retries в VirtualService**: в Istio retries живут на HTTP-маршруте VirtualService,
-   а не в DestinationRule; Circuit Breaking — в DestinationRule.
-3. **Fallback**: реализован как управление отказами — погашение одного пода (по ТЗ),
-   outlier detection + retries поддерживают доступность сервиса.
+Для чёткой фиксации порядка действий **используются скрипты в bat-файлах**.
