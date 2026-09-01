@@ -1,5 +1,6 @@
-# VirtualService и DestinationRule определяют маршрутизацию трафика
-# (канареечный release, фича-флаг, retries) и правила Circuit Breaking.
+# DestinationRule задаёт правила Circuit Breaking и subsets (v1 / v2).
+# Маршрутизация трафика (канареечный release, фича-флаг, retries) описана отдельно
+# в booking-service-virtual-Service.yaml.
 
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
@@ -40,42 +41,3 @@ spec:
         http:
           http1MaxPendingRequests: 20
           maxRequestsPerConnection: 15
-
----
-apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
-metadata:
-  name: booking-service
-spec:
-  hosts:
-  - booking-service
-  http:
-  # Если клиент шлёт X-Feature-Enabled: true, то
-  # трафик идёт на новую версию v2 (100%).
-  - name: booking-feature-flag
-    match:
-    - headers:
-        x-feature-enabled:
-          exact: "true"
-    route:
-    - destination:
-        host: booking-service
-        subset: v2
-      weight: 100
-
-  # ИНАЧЕ -> канареечный Release с распределением трафика: 90% -> v1, 10% -> v2.
-  # Retries на стороне Envoy защищают от сбоев и задержек.
-  - name: booking-service-canary
-    retries:
-      attempts: 3
-      perTryTimeout: 2s
-      retryOn: gateway-error,connect-failure,refused-stream,reset
-    route:
-    - destination:
-        host: booking-service
-        subset: v1
-      weight: 90
-    - destination:
-        host: booking-service
-        subset: v2
-      weight: 10

@@ -1,7 +1,7 @@
 # EnvoyFilter: реализация фича-флага через инъекцию в Envoy (sidecar).
 #
 # V01: данная маршрутизация по заголовку X-Feature-Enabled: true уже описана
-#      на уровне VirtualService (booking-service-traffic.yaml).
+#      на уровне VirtualService (booking-service-virtual-Service.yaml).
 #      Этот EnvoyFilter добавляется как дополнительная точка управления:
 #      на входящем (SIDECAR_OUTBOUND) пути он проверяет заголовок и в случае
 #      X-Feature-Enabled: true добавляет внутренний заголовок

@@ -48,9 +48,11 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo 6) Применение конфигурации трафика Istio (VirtualService + DestinationRule)
+echo 6) Применение конфигурации трафика Istio (DestinationRule + VirtualService)
 echo (канареечный Release 90/10, фича-флаг, retries, Circuit Breaking)
-kubectl apply -f booking-service-traffic.yaml
+kubectl apply -f booking-service-destination-rule.yaml
+if errorlevel 1 goto :error
+kubectl apply -f booking-service-virtual-Service.yaml
 if errorlevel 1 goto :error
 
 echo Фича-флаг через EnvoyFilter (заголовок X-Feature-Enabled)
