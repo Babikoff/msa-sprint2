@@ -7,14 +7,13 @@ REM
 REM  Usage: call deploy-common.bat ENV_LABEL VALUES_FILE CONTAINER TEST_PORT
 REM    %1 ENV_LABEL   e.g. PROD / STAGING
 REM    %2 VALUES_FILE e.g. ./helm/booking-service/values-prod.yaml
-REM    %3 VERSION_VALUES_FILE e.g. ./helm/booking-service/values-v1.yaml
-REM    %4 CONTAINER   smoke-test container name
-REM    %5 TEST_PORT   smoke-test local port
+REM    %3 CONTAINER   smoke-test container name
+REM    %4 TEST_PORT   smoke-test local port
 REM
 REM  Optional env: IMAGE_TAG = fixed image tag (default: timestamp)
 REM
 REM  Flow: build -> smoke test /ping -> minikube image load
-REM        -> helm upgrade --install -> kubectl rollout status
+REM        -> helm upgrade --install (single, обе версии v1/v2 в одном chart -> kubectl rollout status
 REM ============================================================
 
 if "%~1"=="" (
@@ -27,9 +26,8 @@ cd /d "%~dp0"
 
 set "ENV_LABEL=%~1"
 set "VALUES_FILE=%~2"
-set "VERSION_VALUES_FILE=%~3"
-set "CONTAINER=%~4"
-set "TEST_PORT=%~5"
+set "CONTAINER=%~3"
+set "TEST_PORT=%~4"
 set "IMAGE_NAME=booking-service"
 set "RELEASE_NAME=booking-service"
 set "CHART_DIR=./helm/booking-service"
@@ -44,7 +42,7 @@ if defined IMAGE_TAG (
 echo ============================================================
 echo  Deploying %RELEASE_NAME% [%ENV_LABEL%]
 echo  Image : %IMAGE_NAME%:%FINAL_TAG%
-echo  Values: %VALUES_FILE% %VERSION_VALUES_FILE%
+echo  Values: %VALUES_FILE%
 echo ============================================================
 
 REM ---------- [1/5] Build the image ----------
@@ -81,22 +79,18 @@ helm upgrade --install %RELEASE_NAME% %CHART_DIR% ^
     --set image.pullPolicy=IfNotPresent
 if errorlevel 1 goto :error
 
-echo install %VERSION_VALUES_FILE%
-helm upgrade --install %RELEASE_NAME% %CHART_DIR% ^
-    -f %VERSION_VALUES_FILE% ^
-    --set image.tag=%FINAL_TAG% ^
-    --set image.pullPolicy=IfNotPresent
+REM ---------- [5/5] Wait for rollout ----------
+echo.
+echo [5/5] Waiting for rollout (versions v1 and v2) ...
+REM Note: versions are HARDCODED
+kubectl rollout status deployment/%RELEASE_NAME%-v1 --timeout=120s
+if errorlevel 1 goto :error
+kubectl rollout status deployment/%RELEASE_NAME%-v2 --timeout=120s
 if errorlevel 1 goto :error
 
-REM ---------- [5/5] Wait for rollout ----------
-@REM echo.
-@REM echo [5/5] Waiting for rollout ...
-@REM kubectl rollout status deployment/%RELEASE_NAME%
-@REM if errorlevel 1 goto :error
-
-@REM echo.
-@REM echo [OK] %ENV_LABEL% deployment successful.
-@REM kubectl get pods -l app=%RELEASE_NAME%
+echo.
+echo [OK] %ENV_LABEL% deployment successful.
+kubectl get pods -l app=%RELEASE_NAME%
 exit /b 0
 
 :error_smoke
