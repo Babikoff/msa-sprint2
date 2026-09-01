@@ -33,7 +33,28 @@ run_check() {
 run_check check-istio
 run_check check-feature-flag
 run_check check-canary
+
+# === Имитируем "падение" v1: маршрут на v2 + убийство всех подов v1 ===
+echo
+echo "=== Fallback-тест: накатываем конфиг с fallback вместо канарейки и выключаем все поды с v1 ==="
+kubectl apply -f booking-service-traffic-fallback.yaml
+# Выключаем все поды v1 (имитируем отказ версии v1)
+kubectl scale deployment/booking-service-v1 --replicas=0
+# Ждём, пока Envoy выведет v1 endpoints из балансировки
+sleep 10
+
+# Выполним чек, много раз и теперь все должны попасть в v2
 run_check check-fallback
+
+# === Восстанавливаем после теста fallback ===
+echo
+echo "=== Восстанавливаем поды v1 и канареечный маршрут ==="
+# Возвращаем число реплик v1 (3 по helm values) и ждём готовности
+kubectl scale deployment/booking-service-v1 --replicas=3
+kubectl rollout status deployment/booking-service-v1 --timeout=120s
+kubectl wait --for=condition=ready pod -l app=booking-service --timeout=120s
+# Возвращаем основной VirtualService (канарейка 90/10)
+kubectl apply -f booking-service-virtual-Service.yaml
 
 echo
 echo "=============================================="
