@@ -21,7 +21,7 @@ Mock-сервис заменён на вашу реализацию.
 
 ### Реализовать Helm-чарт. ###
 **Deployment с пробами:** livenessProbe и readinessProbe по /ping.
-Service типа ClusterIP (порт 80 → targetPort 8080).
+Service типа ClusterIP (порт 80 -> targetPort 8080).
 **Значения из values.yaml:**
 - replicaCount;
 - image.name, image.tag, image.pullPolicy;

@@ -45,7 +45,7 @@
 ## Особенности реализации
 1. Пробы по /ping; отдельные /health и /ready endpoints отсутствуют (закрывается пробой /ping).
 2. Локальный образ через imagePullPolicy: Never (при деплое скриптами IfNotPresent).
-3. DNS-имена работают только внутри кластера, снаружи — kubectl port-forward svc/booking-service 8080:80.
+3. DNS-имена работают только внутри кластера, снаружи - kubectl port-forward svc/booking-service 8080:80.
 
 
 ## Запуск сервиса booking-service в minikube
