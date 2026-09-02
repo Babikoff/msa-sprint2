@@ -20,7 +20,7 @@
 - Deployment `booking-v2` (label `version: v2`, `APP_VERSION=v2`, `ENABLE_FEATURE_X=true`, 1 реплика).
 - Service `booking` — selector `app: booking`, порт 80 → targetPort 8080.
 
-### 3. Istio-маршрутизация (`booking-service-traffic.yaml`)
+### 3. Istio-маршрутизация (`booking-service-virtual-Service.yaml` + `booking-service-destination-rule.yaml`)
 - **Канареечный Release**: VirtualService, вес v1=90 / v2=10.
 - **Фича-флаг**: match по заголовку `x-feature-enabled: "true"` → 100% на v2.
 - **Retries**: in VirtualService (attempts 3, perTryTimeout 2s).
