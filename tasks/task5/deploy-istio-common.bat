@@ -1,11 +1,37 @@
 @echo off
 rem Switch console to UTF-8 for Cyrillics.
 chcp 65001 >nul
-setlocal
+
+setlocal EnableExtensions
+
 REM ============================================================
-REM start-istio.bat — установка Istio в Minikube и деплой Booking (v1+v2).
-REM Путь к istioctl можно переопределить: set ISTIOCTL=C:\...\istioctl.exe
+REM  deploy-istio-common.bat - base logic for full deploy/redeploy with Istio
+REM
+REM  Usage: call deploy-common.bat ENV_LABEL VALUES_FILE CONTAINER TEST_PORT
+REM    %1 ENV_LABEL   e.g. PROD / STAGING
+REM    %2 VALUES_FILE e.g. ./helm/booking-service/values-prod.yaml
+REM    %3 CONTAINER   smoke-test container name
+REM    %4 TEST_PORT   smoke-test local port
+REM
+REM  Optional env: IMAGE_TAG = fixed image tag (default: timestamp)
+REM
+REM  Flow: build -> smoke test /ping -> minikube image load
+REM        -> helm upgrade --install (single, обе версии v1/v2 в одном chart -> kubectl rollout status
+REP        -> apply Istio configs (booking-service versions v1 and v2, feature flag, canary release)
 REM ============================================================
+
+if "%~1"=="" (
+    echo [ERROR] Usage: deploy-common.bat ENV_LABEL VALUES_FILE CONTAINER TEST_PORT
+    exit /b 1
+)
+
+REM --- Ensure relative paths resolve relative to this script's dir ---
+cd /d "%~dp0"
+
+set "ENV_LABEL=%~1"
+set "VALUES_FILE=%~2"
+set "CONTAINER=%~3"
+set "TEST_PORT=%~4"
 
 if "%ISTIOCTL%"=="" set "ISTIOCTL=C:\Istio\istio-1.30.4\bin\istioctl.exe"
 
@@ -42,7 +68,7 @@ echo где будут работать микросервисы Booking
 kubectl label namespace default istio-injection=enabled --overwrite
 
 echo 5) Сборка, загрузка, генерация и накат конфигов через Helm
-call "%~dp0deploy-common.bat" STAGING ./helm/booking-service/values-staging.yaml test-booking-staging 8081
+call "%~dp0deploy-helm.bat" %ENV_LABEL% %VALUES_FILE% %CONTAINER% %TEST_PORT%
 if errorlevel 1 (
     echo [ERROR] deploy-common.bat завершился ошибкой. Остановка.
     exit /b 1
