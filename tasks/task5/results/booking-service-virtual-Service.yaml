@@ -1,5 +1,4 @@
-# VirtualService для фича-флаг и канареечного release
-
+# VirtualService для feature flag и канареечного release
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:

@@ -1,12 +1,11 @@
-# EnvoyFilter: реализация фича-флага через инъекцию в Envoy (sidecar).
+# EnvoyFilter: реализация feature-flag через инъекцию в Envoy (sidecar).
 #
 # V01: данная маршрутизация по заголовку X-Feature-Enabled: true уже описана
 #      на уровне VirtualService (booking-service-virtual-Service.yaml).
 #      Этот EnvoyFilter добавляется как дополнительная точка управления:
 #      на входящем (SIDECAR_OUTBOUND) пути он проверяет заголовок и в случае
 #      X-Feature-Enabled: true добавляет внутренний заголовок
-#      x-feature-route: v2, чтобы трафик маршрутизировался на v2.
-#      Так можно менять поведение без изменения бизнес-кода сервиса.
+#      x-feature-route: v2.
 apiVersion: networking.istio.io/v1alpha3
 kind: EnvoyFilter
 metadata:

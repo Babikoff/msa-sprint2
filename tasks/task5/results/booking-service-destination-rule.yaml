@@ -1,6 +1,4 @@
-# DestinationRule задаёт правила Circuit Breaking и subsets (v1 / v2).
-# Маршрутизация трафика (канареечный release, фича-флаг, retries) описана отдельно
-# в booking-service-virtual-Service.yaml.
+# DestinationRule задаёт правила Circuit Breaking и задаёт деплой нескольких версий через subsets (v1 / v2).
 
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
