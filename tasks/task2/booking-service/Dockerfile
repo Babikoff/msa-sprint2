@@ -3,7 +3,6 @@ FROM eclipse-temurin:17-jdk-jammy AS build
 WORKDIR /build
 COPY gradlew gradlew.bat settings.gradle build.gradle ./
 COPY gradle gradle
-COPY libs libs
 RUN sed -i 's/\r$//' gradlew && chmod +x gradlew
 RUN ./gradlew --no-daemon dependencies
 COPY src src

@@ -25,6 +25,13 @@ services:
     networks:
       - hotelio-net
 
+  promocode-subgraph:
+    build: ./promocode-subgraph
+    ports:
+      - "4003:4003"
+    networks:
+      - hotelio-net
+
 networks:
   hotelio-net:
     external: true

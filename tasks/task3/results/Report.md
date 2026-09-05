@@ -79,15 +79,19 @@
 
 ## Как запускать
 
-Через ***bash или Terminal в VSCode*** 
+Через ***bash*** или ***Terminal в VSCode*** 
 ### 1. Поднять через docker compose инфраструктуру из task2 (monolith, booking-service, Kafka, базы данных)
-cd tasks/task2
+```
+cd ./tasks/task2/booking-service
 docker compose up -d --build
+cd ../../../
+```
 
 ### 2. Поднять через docker compose GraphQL-шлюз и субграфы из task3
-cd ../task3
+```
+cd ./tasks/task3
 docker compose up -d --build
-
+```
 
 ## Тестирование
 
